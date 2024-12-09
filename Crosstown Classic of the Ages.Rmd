@@ -2,7 +2,9 @@
 title: "The Greatest Crosstown Classic"
 author: "Idrees Muhammad Kudaimi"
 date: "2024-12-3"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -22,6 +24,7 @@ We will explore the question in-depth, using era-adjusted statistics like WAR (W
 One thing statisticians use when it comes to comparing teams in baseball is Pythagorean record.This formula estimates a team’s expected winning percentage based on runs scored and runs allowed, providing a measure of how well their performance on the field aligns with their actual record. It identifies underperforming and overperforming teams that may have lucked out game to game more than others. The formula is W%=[(Runs Scored)^1.81]/[(Runs Scored)^1.81 + (Runs Allowed)^1.81]. Park factors are also worth looking at, as there are no set standards for stadiums in the MLB, so every stadium has a different distance for home runs, wall height, etc. Then we can also look at postseason performance by each team. 
 
 ```{r}
+load("C://Users//imksy//Downloads//cubssoxdata.RData")
 comparison_data %>%
   kable(caption = "Comparison of 2005 White Sox and 2016 Cubs") %>%
   kable_styling("striped", full_width = F)
@@ -389,58 +392,3 @@ In terms of advanced fielding, the 2016 Cubs significantly outperformed the 2005
 As for clutch performance, the White Sox demonstrated a reputation for stepping up in critical moments, particularly during their postseason run in 2005. Their ability to come through in tight spots was evidenced by key clutch hits from players like Paul Konerko and Geoff Blum in the World Series. Meanwhile, the Cubs' 2016 team also had its share of clutch performances, but the White Sox's bullpen, led by closer Bobby Jenks and a strong rotation, may have had an edge in late-game situations, which could have influenced their overall performance in a series. ...
 
 On offense, the Cubs were significantly more potent, as shown by the WAR contributions of Kris Bryant, Anthony Rizzo, and Dexter Fowler. Bryant’s 7.9 fWAR and Rizzo’s 5.8 fWAR in 2016 vastly outshine the White Sox’s top hitters like Paul Konerko and Jermaine Dye. This offensive firepower, combined with their defensive strength (especially in the infield with players like Javier Baez and Addison Russell), provides the Cubs with a better overall balance. The White Sox, while more balanced in terms of depth—featuring more contributors with solid WAR values across the lineup—lack the same elite-level production from their best hitters. The era-adjusted metrics, especially the Cubs' efWAR, demonstrate that their offensive and defensive prowess in the high-scoring 2016 season was more efficient compared to the White Sox’s production in the lower-scoring 2005 environment, giving the Cubs a clear edge in overall run production. Thus, the Cubs’ combination of elite starting pitching, offensive firepower, and era-adjusted value should lead them to a 4-2 series win, though the White Sox's depth and bullpen could still make the series competitive.
-
-```{r}
-
- 
-```
-
-```{r}
-```
-
-```{r}
-```
-
-
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r, echo=FALSE}
-
-```
-
-```{r, echo=FALSE}
-
-```
-
-```{r, echo=FALSE}
-
-```
-
-```{r, echo=FALSE}
-
-```
-
-```{r, echo=FALSE}
-
-```
-
-```{r, echo=FALSE}
-
-```
-
-```{r, echo=FALSE}
-
-```
-
-```{r, echo=FALSE}
-
-```
-
-```{r, echo=FALSE}
-
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
