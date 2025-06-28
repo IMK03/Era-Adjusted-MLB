@@ -1,0 +1,523 @@
+---
+title: "Juan Soto and MLB Mega Contracts"
+author: "Idrees Muhammad Kudaimi"
+date: "2025-04-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Juan Soto and the Mega Contract
+
+Juan Soto has emerged as one of Major League Baseball’s most electrifying young stars. Bursting onto the scene as a teenager, he helped carry the Washington Nationals to a World Series title at just 20 years old. Since then, the left-handed slugger has only bolstered his legacy—leading all of MLB in Wins Above Replacement (WAR) in 2021 and consistently ranking among the league’s most productive hitters. After being traded twice in just over a year, Soto entered free agency and signed one of the most lucrative contracts in professional sports history: **15 years, \$765 million**, with an **average annual value (AAV) of \$51 million**.
+
+That AAV trails only Shohei Ohtani’s unprecedented \$70 million deal—though Ohtani uniquely contributes as both an elite pitcher and hitter. Soto, by contrast, becomes the **highest-paid player in history based purely on offensive performance**, while still offering solid value as a defender in left field. Yet even more striking is how differently these two contracts are structured. Ohtani’s deal features heavy deferrals, lowering his annual payroll salary to just \$28.2 million and a \$46 million average for luxury tax purposes. **Soto’s contract has no deferred money**, placing a full **\$51 million on the luxury tax books each season**—including **\$61.9 million in actual payroll** during his first five years (before an opt-out).
+
+These numbers raise important questions:  
+- **How good does Soto need to be to justify this historic investment?**  
+- **How does his deal compare to other mega-contracts handed out in the luxury tax era?**  
+- **Are teams getting fair value when they pay premium salaries for high-WAR players, or is efficiency lost at the top?**
+
+To answer these questions, this analysis evaluates Soto’s contract through both an **absolute and comparative lens**. We’ll estimate how much WAR he needs to generate to match his price tag, incorporating both **era-adjusted** and **raw WAR metrics**. According to historical data, teams have paid approximately **\$8 million per WAR** in free agency over the past two decades, equating to **3.32% of a team’s luxury tax payroll per WAR** since the system’s introduction in 2003 (*Paraball Notes, 2024*). This benchmark will serve as a foundation for evaluating Soto’s expected value over time.
+
+In addition to Soto's individual valuation, we’ll also explore broader trends in free agent spending:
+
+- How have past **mega-deals performed** using both efWAR and ebWAR?  
+- Do **high-payroll teams pay more** per WAR, and if so, **do they get better value**?  
+- What do **regressions** reveal about the relationship between spending levels and WAR efficiency?  
+- Is there more **volatility or inefficiency** when signing low-WAR players compared to stars?  
+- And most importantly—**where does Juan Soto’s deal fit** in the broader context of free-agent contract performance?
+
+By integrating statistical modeling, WAR-based valuation, and historical context, we’ll assess whether Soto’s record-setting contract represents an **overpay**, an **undervalued bargain**, or simply the **true market rate for generational talent** in today’s MLB economy.
+
+## Data Loading
+
+We will load in the following built-in R packages and our own datasets.
+
+```{r data_loading, echo=TRUE, warning=FALSE, message=FALSE}
+
+library(ggplot2)
+library(dplyr)
+library(knitr)
+library(kableExtra)
+library(tidyverse)
+library(ggrepel)
+library(readr)
+library(ggcorrplot)
+library(broom)
+library(purrr)
+library(ggimage)
+library(scales)
+load("C://Users//imksy//Documents//Juan Soto.RData")
+```
+
+## Defining a Mega Contract
+
+In 1991, Bobby Bonilla signed a 5 year, $29 million total deal with the New York Mets, at the time the largest contract in team sports history. Quickly afterwards, salaries starting skyrocketing across the sports landscape, as revenue and TV contracts exploded in the late 1990s through the 2000s, on top of general economic inflation. As you see, Soto now makes almost 9 times as much per year than Bonilla did. So the definition of a mega contract has changed a lot.  
+
+We specifically will be looking at contracts signed in the 21st century, as the MLB implemented the luxury tax in 2003 (more on that later). According to baseball reference, all of the top 50 largest MLB contracts have been signed in the 21st century. In order to be classified as a mega contract, we chose the cut off to be either \$165,000,000 total contract value (right on top 50 all time in MLB history), or a shorter term deal worth at least \$30 million AAV (i.e Alex Bregman's new contract). We also only looked at batters for our comparisons, so we ended up with 34 mega contracts for our Juan Soto analysis, including him. 
+
+## WAR values before and after mega contracts
+
+We can split a player's career WAR (wins above replacement) into two distinct categories; before they signed their mega contract, and after they signed their mega contract. This would allow us to easily glean why a team signed a player to a mega contract, and how well they performed compared to pre large contract days once they signed a deal in free agency. We will tier the contracts into tier 1 (above \$500 million total), tier 2 (above \$300 million total), and tier 3 (above \$150 million total)
+
+(Note: Alex Rodriguez's second mega contract is listed as A-Rod)
+
+```{r mega contracts load, echo=FALSE, message=FALSE, warning=FALSE}
+final_summary %>%
+  kable("html", caption = "Mega Contract WAR Summary", table.attr = "style='width:100%;'") %>%
+  kable_styling(full_width = TRUE, bootstrap_options = c("striped", "hover")) %>%
+  scroll_box(height = "400px")
+
+```
+
+Analyzing our mega contract players before and after their free agent signings, we have 13 players who were better before their contract kicked in, 8 players better after their contract kicked in, and 10 players about the same based on eWAR. Since the before value is slightly skewed to less WAR due to teams bringing a player up from the minors for their first MLB playtime after midseason for arbitration and contract length purposes, we used +- 0.5 average WAR for them to be equal in their play before and after. We used average WAR instead of total WAR since the years before and after were rarely equal. 
+
+```{r mega contracts plot, echo=FALSE, message=FALSE, warning=FALSE}
+# Plot for average eWAR
+ggplot(wide_summary, aes(x = avg_eWAR_before, y = avg_eWAR_after, label = name)) +
+  geom_point(color = "blue", size = 3, alpha = 0.7) + 
+  geom_text_repel(size = 3) +
+  geom_vline(xintercept = median_eWAR_before, linetype = "dotted", color = "black") +
+  geom_hline(yintercept = median_eWAR_after, linetype = "dotted", color = "black") +
+  labs(
+    x = "Avg eWAR Before Contract",
+    y = "Avg eWAR After Contract",
+    title = "Before vs. After Avg eWAR"
+  ) +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_line(color = "gray80", linetype = "dashed"),
+    panel.grid.minor = element_line(color = "gray90", linetype = "dotted")
+  )
+
+# Plot for average WAR
+ggplot(wide_summary, aes(x = avg_WAR_before, y = avg_WAR_after, label = name)) +
+  geom_point(color = "blue", size = 3, alpha = 0.7) + 
+  geom_text_repel(size = 3) +
+  geom_vline(xintercept = median_WAR_before, linetype = "dotted", color = "black") +
+  geom_hline(yintercept = median_WAR_after, linetype = "dotted", color = "black") +
+  labs(
+    x = "Avg WAR Before Contract",
+    y = "Avg WAR After Contract",
+    title = "Before vs. After Avg WAR"
+  ) +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_line(color = "gray80", linetype = "dashed"),
+    panel.grid.minor = element_line(color = "gray90", linetype = "dotted")
+  )
+
+
+# Compute medians
+median_eWAR_before <- median(wide_summary$avg_eWAR_before, na.rm = TRUE)
+median_eWAR_after  <- median(wide_summary$avg_eWAR_after, na.rm = TRUE)
+median_WAR_before  <- median(wide_summary$avg_WAR_before, na.rm = TRUE)
+median_WAR_after   <- median(wide_summary$avg_WAR_after, na.rm = TRUE)
+
+```
+
+## Luxury Tax Implementation
+
+In 2003, the MLB implemented the current day luxury tax, called the Competitive Balance Tax, after a failed attempt in 1997 during the players' strike. The aim was meant to try and balance out competition across the league, instead of making it richest big market teams vs moneyball bargain bin hunting teams. From the MLB website: 
+
+"Each year, clubs that exceed a predetermined payroll threshold are subject to a Competitive Balance Tax -- which is commonly referred to as a "luxury tax." Those who carry payrolls above that threshold are taxed on each dollar above the threshold, with the tax rate increasing based on the number of consecutive years a club has exceeded the threshold.
+
+A team's Competitive Balance Tax figure is determined using the average annual value of each player's contract on the 40-man roster, plus any additional player benefits. Every team's final CBT figure is calculated at the end of each season."
+
+For the first year being above the luxury tax threshold, there is a 20% tax on overages, for the second year 30%, and for the third year or more, 50%. There is another surcharge for being \$20 million+ above the threshold, 12% up to \$40 million, 45% up to \$60 million, and 60% subcharge for any higher than that. Plus, a team's first round pick can be moved down 10 spots if they aren't in the top 6. While the penalties are harsh, MLB teams, especally big market ones,  continue to hand out these mega contracts and go above the luxury tax threshold, because at the end of the day, the only main penalty is paying more money, and building an elite team will bring in revenue to offset the losses.
+
+## Percentage of Luxury Tax Per Mega Contract
+
+The luxury tax threshold has increased every year, few exceptions. Naturally, mega contract values have gone way up. All the tier 1 mega contracts have been signed in the 2020s. All tier 2 mega contracts have been signed in the 2010s and 2020s. And all other mega contracts in the 21st century. To adjust for this inflation and to compare contracts across different years, we can evaluate by the percentage of the luxury tax they take up, rather than straight up average salary, season by season. 
+
+```{r pp, echo=FALSE, message=FALSE, warning=FALSE}
+combined_data %>%
+  kable("html", caption = "Mega Contract Luxury Tax Summary", table.attr = "style='width:100%;'") %>%
+  kable_styling(full_width = TRUE, bootstrap_options = c("striped", "hover")) %>%
+  scroll_box(height = "400px")
+
+```
+
+## Dollar Per WAR
+
+In order for a team to be successful, they must properly allocate their funds efficiently, and not waste it on players who are not contributing. You want your team full of players who have highly positive WAR values. ...
+
+A study by The Paraball Notes found that based on free agent contracts signed after the 2024 season, the current dollar per war value teams would be paying is \$8 million. Logically, this can't be applied for every single season, as the luxury tax threshold increases and naturally player contracts also increase. Instead, we calculated the percentage that \$8 million would be of the current luxury tax threshold, \$241 million, and that means each WAR paid for by a team should take up about 3.32% of the payroll. This checks out since about half of MLB teams, using this value, ended up below and half ended up above the ~33 WAR that would be totaled in the 2024 season, multiplying 1 WAR = 3.32% of payroll. So we extrapolate the 3.32% luxury tax per WAR for every season since 2003 to assess whether a player successfully accumulated enough WAR to match their salary. If a player takes up 9.96% of their team's luxury tax payroll, they need to accumulate 3 WAR that season to meet expectations.
+
+
+```{r dpw, echo=FALSE, message=FALSE, warning=FALSE}
+total_war_data %>%
+  kable("html", caption = "WAR total data", table.attr = "style='width:100%;'") %>%
+  kable_styling(full_width = TRUE, bootstrap_options = c("striped", "hover")) %>%
+  scroll_box(height = "400px")
+
+
+```
+
+According to bWAR and fWAR, our unadjusted wins above replacement values, 16 of the mega contracts fell well short of expectations. However, according to ebWAR and efWAR, our era-adjusted wins above replacement values, only 10 of the mega contracts fell short of expectations. What does this mean? In the moment during some of those seasons, the player did not perform up to expectations. But as time has gone on, that season actually has aged well, as era-adjusted statistics indicate the talent pool was greater that season. Just 7 contracts heavily outperformed expectations from our unadjusted WAR, while 16 heavily outperformed them based on era-adjusted WAR. 5 contracts were right at expectations, 3 just short, and 4 just above for unadjusted WAR, while 6 contracts were right at expectations, 2 just short, and 1 just above for era-adjusted WAR. The cutoffs were +- >= 5 WAR over the contract duration for heavily over or underperforming, and +- 2.5 to 5 for just above or just below expectations, 0 to 2.5 for just met expectations.
+
+
+## Regression Models for Mega Contracts and Juan Soto
+
+In order to quantify and observe the relationship between the many aspects of mega contracts (luxury tax %, dollar per WAR, salary) and WAR statistics, we can use linear regression models. 
+
+We will run the following regressions: Average Dollar per WAR vs Average WAR (Do better players cost more per WAR?), Average Luxury Tax Percent vs Average WAR per Year (Do stars take up significantly more of the cap?), Average Dollar per WAR vs Average Luxury Tax Percentage (Does higher cap share mean worse value?)
+
+```{r pressurereg, echo=FALSE, message=FALSE, warning=FALSE}
+reg_avg_WAR_per_year <- lm(Dollar_per_WAR ~ avg_WAR, data = war_data)
+summary(reg_avg_WAR_per_year)
+
+reg_avg_WAR_per_year <- lm(avg_LTP_pct ~ avg_WAR_per_year, data = war_data_agg)
+summary(reg_avg_WAR_per_year)
+
+
+reg_agg_WAR <- lm(avg_dollar_per_WAR ~ avg_LTP_pct, data = war_data_agg)
+summary(reg_agg_WAR)
+
+```
+
+From these regressions, we find that logically, the mega contract players who are high-WAR take up more of the luxury tax and cost more per WAR, but this is market driven, not inefficiency. For every 1 unit increase in average WAR, their cost per WAR goes down about \$6 million, so the market suggests signing these mega contract players is more efficient for dollar per WAR. We will come back to this a little later.
+
+Juan Soto's current \$8 million/WAR and ~21% luxury tax cap share (which will go down every season) are what you'd expect in the modern day market, given the historical trends for these elite players. The relationshops indicates that for 1 additional WAR a player produces, they take a little under 1% more of the luxury tax, so a guy like Soto, when his contract luxury tax percentage levels off, and averages around 17% of the tax across the duration of his contract, lines up with expectations. 
+
+There is no evidence that consuming a large share of the tax correlates with being a worse value. This suggests Soto's deal aligns with the economics of star-level performances and contracts. 
+
+# Dollar per WAR as a function of WAR
+
+We can visualize these regressions by plotting them to see the trend. First, going by every individual season, in which a quadratic relationship is observed.
+
+```{r pressurep, echo=FALSE, message=FALSE, warning=FALSE}
+
+# Plot: Aggregate WAR vs. $ per WAR (log scale)
+ggplot(war_data, aes(x = avg_WAR, y = Dollar_per_WAR)) +
+  geom_point(alpha = 0.6, color = "blue") +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  scale_x_continuous(limits = c(0, 10), breaks = seq(0, 10, by = 1)) +  # X-axis: 0 to 10
+  scale_y_log10(
+    breaks = c(1e6, 2e6, 5e6, 1e7, 2e7, 5e7, 1e8),  # Log breaks emphasizing 1M-10M range
+    labels = dollar_format(scale = 1)  # Format as dollars
+  ) +
+  labs(
+    title = "$ Per WAR as a Function of WAR, Individual Seasons",
+    x = "Average Aggregate WAR",
+    y = "$ per WAR (log scale)"
+  ) +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_line(color = "gray80", linetype = "dashed"),
+    panel.grid.minor = element_line(color = "gray90", linetype = "dotted")
+  )
+
+
+```
+
+As shown in the plot, there's a strong inverse relationship between total WAR over a contract and the dollar paid per WAR. Players who produce more WAR tend to be far more cost-efficient, with $/WAR dropping sharply as WAR increases. This means teams get significantly more value from high-WAR performers, especially over long-term deals.
+
+For mega-contracts like Juan Soto’s, this is key: if he consistently posts high WAR, his $51 million AAV becomes more justifiable. But if his WAR dips, the cost per win quickly becomes unsustainable. In short, elite performance drives down cost per WAR, making star players a better long-term investment.
+
+We can also check for over duration of a mega contract: 
+
+
+```{r pressure1, echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(war_data_total %>% filter(avg_dollar_per_WAR < 25e6), aes(x = avg_total_WAR, y = avg_dollar_per_WAR, label = name)) +
+  geom_point(alpha = 0.6, color = "blue") +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  geom_text_repel(size = 3) +  # Label players
+  scale_y_continuous(
+    limits = c(3e6, 13e6),
+    breaks = c(3e6, 4e6, 6e6, 8e6, 12e6),
+    labels = scales::label_dollar(scale_cut = scales::cut_short_scale())
+  )+
+  labs(
+    title = "$ Per WAR as a Function of Total WAR (Duration of Contracts)",
+    x = "Average Aggregate Total WAR",
+    y = "$ per WAR"
+  ) +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_line(color = "gray80", linetype = "dashed"),
+    panel.grid.minor = element_line(color = "gray90", linetype = "dotted")
+  )
+
+```
+
+Removing the extreme outlier of Kris Bryant, whose contract was derailed by injuries, we see a clear trend: players with high total WAR deliver far better value, with significantly lower dollar per WAR.
+
+At the far right, Alex Rodriguez’s first contract is the standout — delivering over 50 WAR at a bargain rate of under $4 million per WAR. That’s the gold standard for a mega-deal paying off. In contrast, players like Giancarlo Stanton or Christian Yelich sit higher on the chart, showing that even productive players can end up costly if WAR doesn’t accumulate as expected.
+
+The plot highlights the reality of long-term contracts: when stars stay healthy and productive, they offer real surplus value. But when availability or performance falters, $ per WAR spikes quickly. For Juan Soto’s deal to pay off, he’ll need to land on the right side of that curve—combining consistency, durability, and elite output year after year.
+
+# Luxury Tax Percent as function of Avg WAR
+
+```{r pressure3, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Plot avg LTP% vs avg WAR per year
+ggplot(war_data_agg, aes(x = avg_WAR_per_year, y = avg_LTP_pct, label = name)) +
+  geom_point(alpha = 0.6, color = "blue") +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  geom_text_repel(size = 3) +
+  scale_y_continuous(limits = c(5,25)) +
+  labs(
+    title = "Luxury Tax Payroll % vs Average WAR per Year",
+    x = "Average WAR per Year",
+    y = "Average Luxury Tax Payroll %"
+  ) +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_line(color = "gray80", linetype = "dashed"),
+    panel.grid.minor = element_line(color = "gray90", linetype = "dotted")
+  )
+
+```
+
+```{r pressure5, echo=FALSE, warning=FALSE, message=FALSE}
+# Plot LTP% vs average WAR per season
+ggplot(war_data_season, aes(x = avg_WAR, y = payroll_percentage)) +
+  geom_point(alpha = 0.6, color = "blue") +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(
+    title = "Luxury Tax Payroll % vs Average WAR per Season",
+    x = "Average WAR per Season",
+    y = "Luxury Tax Payroll %"
+  ) +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_line(color = "gray80", linetype = "dashed"),
+    panel.grid.minor = element_line(color = "gray90", linetype = "dotted")
+  )
+
+
+```
+
+These scatterplots of average luxury tax payroll percentage against average WAR per year illustrates a clear and statistically significant positive relationship between player performance and cap space allocation. The red regression line, with a slope of approximately 0.99% per WAR and a p-value of 0.0075, shows that as a player's WAR increases, they tend to consume a larger share of a team's luxury tax threshold. Players are visibly clustered into tiers: those producing under 3 WAR per year typically occupy less than 12% of the cap (e.g., Giancarlo Stanton, Xander Bogaerts), while stars producing between 3–6 WAR/year fall into the 12–16% range (e.g., Mike Trout, Manny Machado, Mookie Betts). A few elite players, like Aaron Judge and Alex Rodriguez, exceed 6 WAR/year and command over 20% of their team's cap, highlighting how rare teams are willing to go that high. Notable outliers include Anthony Rendon and Miguel Cabrera, who consumed large cap shares despite modest WAR returns—likely due to injury or aging curves—while players like Matt Olson, Marcus Semien, and Fernando Tatis Jr. offered high WAR at low cap shares, reflecting team-friendly extensions. Juan Soto, projected to produce approximately 6.5 WAR per year and consume about 17% of the Mets’ luxury tax threshold when averages, would land squarely among the central cluster of modern star contracts. His placement would align closely with players like Trout, Lindor, and Machado, suggesting that Soto’s deal reflects prevailing spending norms for top-tier talent and is not an outlier in terms of efficiency or cap burden.
+
+# Dollar per WAR vs Luxury Tax %
+
+Another regression plot we have is Dollar per WAR as a function of Luxury Tax Percentage, averaged per season of the contracts aggregated by player, as well as by individual seasons.
+
+```{r pressure6, echo=FALSE, warning=FALSE, message=FALSE}
+
+
+# Plot: Dollar per WAR vs. Luxury Tax Payroll %
+ggplot(war_data, aes(x = payroll_percentage, y = Dollar_per_eWAR)) +
+  geom_point(alpha = 0.6, color = "blue") +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  scale_y_log10(labels = dollar_format()) +  # Log scale for better visualization
+  labs(
+    title = "Dollar per WAR vs Luxury Tax %, Individual Seasons",
+    x = "Luxury Tax Payroll %",
+    y = "Dollar per WAR"
+  ) +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_line(color = "gray80", linetype = "dashed"),
+    panel.grid.minor = element_line(color = "gray90", linetype = "dotted")
+  )
+
+```
+
+
+```{r pressure7, echo=FALSE, warning=FALSE, message=FALSE}
+# Plot: Average Dollar per WAR vs. Average Luxury Tax Payroll %
+ggplot(war_data_agg, aes(x = avg_LTP_pct, y = avg_dollar_per_WAR)) +
+  geom_point(alpha = 0.6, color = "blue") +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  geom_text_repel(aes(label = name), size = 3) +
+  labs(
+    title = "Average Dollar per WAR vs Luxury Tax % (Aggregated by Player)",
+    x = "Average Luxury Tax Payroll %",
+    y = "Average Dollar per WAR"
+  ) +
+  scale_y_log10(
+    labels = dollar_format()
+  ) +
+  scale_x_log10(
+    limits = c(7.5, 31),
+    breaks = c(7.5, 10, 12.5, 15, 17.5, 20, 30)
+  ) +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_line(color = "gray80", linetype = "dashed"),
+    panel.grid.minor = element_line(color = "gray90", linetype = "dotted")
+  )
+
+```
+
+Those below the regression line proved their dollar per WAR production to be worth it according to their luxury tax percentage, while those above were not worth it. We see Shohei Ohtani, who won the World Series in his first year with the Dodgers, far right and below, as well as fellow Dodger Mookie Betts below. Ohtani is also without the added benefit of his pitching due to injury, so his placement in these charts would make him look even mre efficient had he been able to pitch in 2024. A declining Christian Yelich is above the regression line. The general trend shows players who take up more of the luxury tax tend to cost slightly more per unit of WAR, though it is only moderate correlation and not statistically significant, as proven by the earlier regression test. Plus, most star players today are very close to the ~ \$8 million per WAR range.
+
+## Free Agent Premiums
+
+We decided to dive deeper into the idea of free agent high WAR player premiums, and see if it extended beyond just mega contract players. Since an average player will have about 2-2.5 WAR per season, we classified high WAR players as 4 or more per season. After much data collection and analysis, this is what we found:
+
+# T-Test
+
+```{r pgg, echo=FALSE, warning=FALSE, message=FALSE}
+# Run the t-test
+t_test_result <- t.test(dollar_per_avg_WAR ~ High_WAR, data = t_test_data)
+
+# Print the result
+t_test_result
+
+```
+
+The Welch two-sample t-test reveals no statistically significant difference in average dollar per WAR between high-WAR (≥ 4 WAR) and low-WAR free agents (p = 0.601). While high-WAR players average $3.02M per WAR and low-WAR players average $2.79M per WAR, the difference of ~$231K is not significant and lies well within the 95% confidence interval (–$1.10M to +$637K). This indicates no consistent cost premium or discount based on WAR tier. Even changing our parameters, we never end up with much greater than $300K difference in high and low WAR players, indicating lack of a premium.
+
+# Regression
+
+```{r pressurepp, echo=FALSE, warning=FALSE, message=FALSE}
+high_war_dpWAR <- lm(dollar_per_avg_WAR ~ High_WAR, data = final_fa_data)
+summary(high_war_dpWAR)
+```
+
+The linear regression model aligns with the t-test, finding that high-WAR players cost abot $300k more per WAR on average, but again, this difference is not statistically significant (p = 0.76). The R² value is nearly zero at 0.0003, meaning that WAR classification does not explain variation in free agent contract efficiency, and teams do not reliably pay more or less per WAR based on performance tier.
+
+# Scatterplot
+
+```{r pressure2, echo=FALSE, warning=FALSE, message=FALSE}
+ggplot(final_fa_data, 
+                          aes(x = payroll_percentage, y = dollar_per_avg_WAR, color = High_WAR)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_y_continuous(limits = c(0, 12000000),
+                     labels = scales::dollar,
+  ) +
+  labs(
+    title = "Luxury Tax % vs Average Dollar per WAR (Free Agent Contracts)",
+    x = "Luxury Tax Payroll %",
+    y = "Average Dollar per WAR"
+  ) +
+  theme_minimal()
+```
+
+This plot shows that as teams spend more (luxury tax % increases), their cost per WAR also rises. Notably, the low-WAR group (red line) shows a steeper increase in $/WAR compared to the high-WAR group (blue line). This suggests that high-spending teams overpay more for lower-WAR players, while elite players remain relatively more efficient at higher payroll levels.
+
+# Boxplot
+
+```{r pressure4, echo=FALSE, warning=FALSE, message=FALSE}
+# Boxplot of Dollar per Average WAR by High_WAR Status
+ggplot(final_fa_data, aes(x = High_WAR, y = dollar_per_avg_WAR, fill = High_WAR)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.6) +  # Boxplot with transparency
+  geom_jitter(width = 0.2, alpha = 0.4) +  # Add jittered points for visibility
+  scale_y_continuous(limits = c(0, 12000000),
+    labels = scales::dollar,
+  ) +
+  labs(
+    title = "Distribution of Dollar per WAR for Free Agent Contracts",
+    x = "High WAR Classification",
+    y = "Average Dollar per WAR"
+  ) +
+  theme_minimal()
+
+```
+
+The boxplot reveals that the distributions of $/WAR for high- and low-WAR players are broadly similar, with a large overlap. The high-WAR group has a slightly higher median, but the variation is wide in both groups. This visual reinforces the statistical result that there is no clear, consistent efficiency advantage for either WAR tier. Sure, a slight premium seems to be paid for high WAR players, but it is not statistically significant.
+
+Juan Soto’s projected average WAR far exceeds 4, and his contract’s AAV (~$44M) translates to a $/WAR around $6.9–$7.1M, depending on projections. This may seem high, but the data shows that elite free agents do not cost more per WAR in a statistically consistent way. If anything, Soto’s contract fits the observed trend: higher-WAR players remain more efficient than their lower-WAR counterparts, especially as team spending increases. Soto is not an outlier — he’s in line with how teams pay for top-tier performance.
+
+
+## The Juan Soto of it all
+
+So given all of this, what can we say about Juan Soto?
+
+Juan Soto’s contract is unprecedented in value, length, and timing. At 25 years old, he became one of the youngest players in MLB history to sign a mega contract, making his 15-year, \$765M contract with the Mets a defining moment in modern baseball economics. Despite its record-breaking size, the data suggest this deal aligns with league trends, especially when benchmarked by cost-efficiency ($ per WAR) and luxury tax share.
+
+Statistical testing found no significant premium paid for high-WAR free agents relative to lower-tier ones. Regressions and visualizations show that while high-WAR players often consume more of the luxury tax threshold, they typically provide more value per dollar than lower-WAR players. In this context, Soto’s ~$7M per WAR fits the established ~\$8M market benchmark, positioning his deal as market-aligned rather than an outlier.
+
+Still, it's a tall order: Soto needs ~88 WAR across 15 years—or ~5.9 WAR per year—to justify the full value. Based on his pre-contract average (6.3 WAR) and ZiPS projections, that level is attainable. In fact, based on raw WAR, this contract, based on those zips projections, seems to be a great deal for the Mets. But raw WAR alone doesn’t tell the whole story—especially when comparing players across eras.
+
+```{r proj, echo=FALSE, warning=FALSE, message=FALSE}
+
+ggplot(war_data_agg_with_soto, aes(x = avg_LTP_pct, y = avg_dollar_per_WAR)) +
+  geom_point(alpha = 0.6, color = "blue") +
+  geom_point(data = soto_row, aes(x = avg_LTP_pct, y = avg_dollar_per_WAR), 
+             color = "darkgreen", size = 4) +  # Highlighted Soto point
+  geom_text_repel(
+    aes(label = name, fontface = fontface),
+    size = 3,
+    show.legend = FALSE
+  ) +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(
+    title = "Average Dollar per WAR vs Luxury Tax % (Aggregated by Player)",
+    x = "Average Luxury Tax Payroll %",
+    y = "Average Dollar per WAR"
+  ) +
+  scale_y_log10(
+    limits = c(7.5e6, 78e6),
+    breaks = c(7.5e6, 12e6, 18e6, 24e6, 36e6, 48e6, 72e6, 78e6),
+    labels = scales::dollar_format()
+  ) +
+  scale_x_log10(
+    limits = c(7.5, 31),
+    breaks = c(7.5, 10, 12.5, 15, 17.5, 20, 30)
+  ) +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_line(color = "gray80", linetype = "dashed"),
+    panel.grid.minor = element_line(color = "gray90", linetype = "dotted")
+  )
+
+
+ggplot(war_data_agg_with_soto, aes(x = avg_LTP_pct, y = avg_dollar_per_eWAR)) +
+  geom_point(alpha = 0.6, color = "blue") +
+  geom_point(data = soto_row, aes(x = avg_LTP_pct, y = avg_dollar_per_eWAR), 
+             color = "darkgreen", size = 4) +  # Highlighted Soto point
+  geom_text_repel(
+    aes(label = name, fontface = fontface),
+    size = 3,
+    show.legend = FALSE
+  ) +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(
+    title = "Average Dollar per eWAR vs Luxury Tax % (Aggregated by Player)",
+    x = "Average Luxury Tax Payroll %",
+    y = "Average Dollar per eWAR"
+  ) +
+  scale_y_log10(
+    limits = c(3e6, 26e6),
+    breaks = c(3e6, 4e6, 6e6, 8e6, 12e6, 24e6),
+    labels = scales::dollar_format()
+  ) +
+  scale_x_log10(
+    limits = c(7.5, 31),
+    breaks = c(7.5, 10, 12.5, 15, 17.5, 20, 30)
+  ) +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_line(color = "gray80", linetype = "dashed"),
+    panel.grid.minor = element_line(color = "gray90", linetype = "dotted")
+  )
+
+```
+
+In the raw WAR plot, Soto’s projected ~$7M per WAR places him well below the regression line, meaning the Mets are expected to get strong value if he meets ZiPS projections. The trend in this plot shows a negative relationship between WAR and $/WAR — players who accumulate more WAR tend to cost less per unit of performance, and Soto fits that model well. This makes his contract look like a potential bargain.
+
+However, the eWAR plot (era-adjusted WAR) tells a more nuanced story. When adjusting WAR to account for changes in league-wide competition over time, Soto’s projected value appears above the regression line, suggesting he may be slightly overpaid on an era-relative basis. This discrepancy reflects how eWAR compresses differences between eras, elevating past performances while slightly dampening the perceived dominance of current players.
+
+Ultimately, these charts illustrate a key philosophical point: the way we evaluate contracts depends heavily on the lens we use. Raw WAR favors Soto in the present, while eWAR forces us to contextualize his output more historically. Still, whether by traditional or adjusted metrics, Soto stands out as an elite player — and the Mets’ investment isn’t just financial, but symbolic. It’s a bet on sustained excellence and a belief that Soto will be remembered as one of the defining players of his generation.
+
+That’s where era-adjusted WAR (eWAR) introduces a new dimension. Players like Soto and Judge, while perhaps shy of all-time greats in traditional WAR, are elite by era-adjusted standards—often outperforming the average competition by historic margins. This raises an important philosophical question: if we judged contracts by eWAR instead of raw numbers, would we redefine what makes a contract “worth it”? Would modern greats like Soto gain the legacy recognition typically reserved for past legends?
+
+Ultimately, Soto's deal reflects not just the Mets' belief in his current value, but their investment in his continued greatness—and perhaps even his place in baseball history. Whether evaluated through traditional metrics or modern adjustments, one thing is clear: Soto’s contract isn’t just a bet on talent. It’s a bet on him becoming a generational icon.
+
+# References
+Major League Baseball. (n.d.). Competitive balance tax. MLB.com. Retrieved from https://www.mlb.com/glossary/transactions/competitive-balance-tax
+
+Paraball Notes. (2024). Dollar/WAR in the 2024–2025 MLB free agency market. Retrieved from https://www.paraballnotes.com/blog/dollarwar-in-the-20242025-mlb-free-agency-market
+
+TangoTiger. (n.d.). Stud0346. Retrieved from https://www.tangotiger.net/archives/stud0346.shtml
+
+Baseball Reference. (n.d.). Baseball statistics and history. Retrieved from https://www.baseball-reference.com/
+
+Eck, D. J., Yan, S., Burgos Jr., A., & Kinson, C. (n.d.). The Full House Model for cross-era comparisons of baseball players (Results and fun digressions version 2.0). University of Illinois Urbana-Champaign. Retrieved May 3, 2025, from https://eckeraadjustment.web.illinois.edu/era_adjusted_V2_I.html
+
+Yan, S., Burgos Jr., A., Kinson, C., & Eck, D. J. (n.d.). Estimation of the MLB talent pool: Supplement to Comparing baseball players across eras via novel Full House Modeling. University of Illinois Urbana-Champaign. Retrieved May 3, 2025, from https://eckeraadjustment.web.illinois.edu/MLBeligiblepop.html
+
+Yan, S., Burgos Jr., A., Kinson, C., & Eck, D. J. (2022). Comparing baseball players across eras via novel Full House Modeling (arXiv:2207.11332). arXiv. https://arxiv.org/abs/2207.11332
+
+# Acknowledgements
+
+Thank you to Professor Daniel J. Eck, the University of Illinois, URES, the statistics department, my fellow undergraduate researchers Mohit Singh and Zheer Whang, and the entire Eck MLB Era-adjustment lab for allowing me to write this piece.
