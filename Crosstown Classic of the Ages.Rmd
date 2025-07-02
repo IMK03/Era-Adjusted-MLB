@@ -17,39 +17,16 @@ The **2005 White Sox** and **2016 Cubs** are the greatest teams in modern baseba
 
 Each team dominated in different ways, leading the league in many statistical categories. The Cubs were primarily an offensive juggernaut, blending power and patience at the plate, while the White Sox primarily relied on elite pitching and a scrappy, contact-heavy offense. Both were still elite on the other side of the diamond though. With both teams seemingly elite at nearly every position, it begs the question: **Which team would prevail in a head-to-head series matchup?**
 
-Conventional wisdom suggests the answer isn’t obvious (pun intended). A quick glance at Baseball Reference shows the Cubs’ superiority at the plate but highlights the White Sox’s edge on the mound. Yet this comparison alone doesn’t account for the differences in the MLB landscape over 11 years. While the gap between 2005 and 2016 might not seem large, the league underwent significant changes. From an explosion in home runs to a rise in strikeouts, MLB evolved in ways that make direct comparisons between these teams challenging.
+Conventional wisdom suggests the answer isn’t obvious off the bat (pun intended). A quick glance at Baseball Reference shows the Cubs’ superiority at the plate but highlights the White Sox’s edge on the mound. Yet this comparison alone doesn’t account for the differences in the MLB landscape over 11 years. While the gap between 2005 and 2016 might not seem large, the league underwent significant changes. From an explosion in home runs to a rise in strikeouts, MLB evolved in ways that make direct comparisons between these teams challenging.
 
-We will explore the question in-depth, using a variety of  baseball statistics. That will include new era-adjusted statistics which account for a constantly changing talent pool, which accounts for differences between the 2005 and 2016 seasons, as well as changes to the game of baseball in the MLB that occurred in those 11 years. Professor Daniel J. Eck and his lab at the University of Illinois, in collaboration with the Chicago Cubs, have worked on this at this website, where they have a [player ebWAR rankings database](https://eckeraadjustment.web.illinois.edu/#rankings), as well as a [technical report which details how the talent pool was calculated](https://htmlpreview.github.io/?https://github.com/ecklab/era-adjustment-app-supplement/blob/main/writeups/era_adjusted_V2_I.html)
+We will explore the question in-depth, using a variety of baseball statistics, including new era-adjusted statistics which account for a constantly changing talent pool and implicitly account for different baseball environments. More details on these era-adjusted statistics can be found [here](https://eckeraadjustment.web.illinois.edu/). Comprehensive details for calculating the talent pool can be found [here](https://htmlpreview.github.io/?https://github.com/ecklab/era-adjustment-app-supplement/blob/main/writeups/era_adjusted_V2_I.html)
 
 Would the White Sox’s pitching dominance stymie the Cubs’ high-powered offense? Or would the Cubs' balanced lineup and stellar defense prevail? Let's find out.
 
 ## Data and Packages
 We will load the following built in R packages:
 
-Plotting packages: 
-ggplot2
-dplyr
-ggimage
-ggrepel 
-
-Data processing/cleaning: 
-readr
-tidyverse
-
-Tables:
-kableExtra
-
-Knitting R Markdown:
-knitr
-
-We will also be scraping team and player data from baseball reference, including the Cubs 2016 stats, the White Sox 2005 stats, and overall average stats from 2005 and 2016, and WAR values from baseball reference and fangraphs. 
-
-
-## Team W-L Records
-
-One thing statisticians use when it comes to comparing teams in baseball is Pythagorean record.This formula estimates a team’s expected winning percentage based on runs scored and runs allowed, providing a measure of how well their performance on the field aligns with their actual record. It identifies underperforming and overperforming teams that may have lucked out game to game more than others. The formula is W%=[(Runs Scored)^1.81]/[(Runs Scored)^1.81 + (Runs Allowed)^1.81].
-
-```{r data_loading, echo=FALSE, warning=FALSE, message=FALSE}
+```{r data_loading, echo=TRUE, warning=FALSE, message=FALSE}
 library(ggplot2)
 library(dplyr)
 library(knitr)
@@ -59,9 +36,34 @@ library(ggrepel)
 library(readr)
 library(ggimage)
 load("C://Users//imksy//Downloads//cubssoxdata.RData")
+```
+
+We will also be scraping team and player data from baseball reference, including the Cubs 2016 stats, the White Sox 2005 stats, and overall average stats from 2005 and 2016, and WAR values from baseball reference and fangraphs. 
+
+
+## Team W-L Records
+
+One thing statisticians use when it comes to comparing teams in baseball is [Pythagorean record](https://en.wikipedia.org/wiki/Pythagorean_expectation). This formula estimates a team’s expected winning percentage based on runs scored and runs allowed, providing a measure of how well their performance on the field aligns with their actual record. It identifies underperforming and overperforming teams that may have lucked out game to game more than others. The formula is:
+
+$$W\% = \frac{(\text{Runs Scored})^{1.81}}{(\text{Runs Scored})^{1.81} + (\text{Runs Allowed})^{1.81}}$$
+
+
+```{r Comp_data, echo=FALSE, warning=FALSE, message=FALSE}
+# Rename the columns
+comparison_data <- comparison_data %>%
+  rename(
+    Park_Factor_Bat = Park_Factor_Batting_One,
+    Park_Factor_Pitch = Park_Factor_Pitching_One
+  )
+
+# Select and display the table
+comparison_data <- comparison_data %>%
+  select(Team, Wins, Losses, Pythagorean_Wins, Pythagorean_Losses, Runs_Scored, Runs_Allowed, Run_differential, Park_Factor_Bat, Park_Factor_Pitch)
+
 comparison_data %>%
   kable(caption = "Record and Ballpark Comparison") %>%
   kable_styling("striped", full_width = F)
+
 ```
 The 2016 Cubs, with their dominant run differential, slightly underperformed in the regular season compared to their Pythagorean expectation. Their actual record was 103-58, but their Pythagorean expectation suggested an even better performance, indicating they outscored opponents by a wide margin but didn’t convert all that dominance into wins. Generally though, they would crush teams when they would win. 
 
@@ -75,15 +77,15 @@ In one of the most dominant postseason runs in MLB history, the White Sox went 1
 
 The Cubs’ postseason journey was more dramatic. They went 11-6, including overcoming a 3-1 deficit in the World Series to defeat Cleveland in seven games. The series itself was a nail-biter, tied 27-27 in runs over the seven games, culminating in a 10th-inning victory in Game 7. While the Cubs didn’t dominate as the White Sox did, their ability to win under pressure added to their historical significance.
 
-## Clutchness
+## Clutchness in Context
 
-Both teams displayed a tremendous amount of grit and resilience in the postseason, resulting in huge clutch moments down the stretch of games, leading to huge boosts in win probability, per Fangraphs.
+Both the 2005 White Sox and 2016 Cubs displayed incredible resilience in the postseason, delivering clutch moments that boosted their win probabilities and led to historic World Series victories—ending title droughts of 88 and 107 years, respectively.  
 
-For the 2005 White Sox, there were a few clutch moments that stuck out, even as they generally blitzed their opponents. In Game 2 of the ALDS against the Boston Red Sox, they rattled off 5 runs in the bottom of the 5th inning to win, including a 3 run HR by Tadahito Iguchi, adding 36.4% win probability. In Game 3, with runners on 2nd and 3rd and nobody out in the 6th inning, Orlando Hernandez came on and got 3 outs, giving up zero runs as the White Sox were up 4-3, adding 35.2% win probability. Joe Crede had a walkoff double to win Game 2 of the ALCS against the Los Angeles Angels, +38.7%. A Joe Crede RBI Single in the 8th inning added 25.7% win probability and pushed the White Sox into the World Series in Game 6. Paul Konerko had a Grand Slam down 2-4 in Game 2 7th inning of the World Series, increasing win probability from 28.2% to 86.1%, then Scott Potsednik walked it off in the 9th inning, adding 41.8% win probability. A Geoff Blum HR in the 14th inning of Game 3 added 41.2% win probability, and finally, a Jermaine Dye RBI Single won the White Sox the World Series in the 8th inning of Game 4 (+23.8% WP), to secure the sweep of the Houston Astros.
+For the White Sox, key moments included Orlando Hernandez escaping a jam in the ALDS (+35.2% WP), Joe Crede’s walk-off double in the ALCS (+38.7%), Paul Konerko’s grand slam in Game 2 of the World Series (+57.9%), and Scott Podsednik’s walk-off homer (+41.8%). Geoff Blum’s 14th-inning homer (+41.2%) and Jermaine Dye’s go-ahead RBI single (+23.8%) sealed their sweep of Houston.  
 
-For the 2016 Cubs, they also had their fair share of close games leading to clutch moments. Javier Baez hit a solo home run into the wind in game 1 of the NLDS against the San Francisco Giants, adding 30.2% win probability. Kris Bryant added 37.2% win probability with a game-tying two-run homer in the top of the 9th in game 3, though they lost that game in 13 innings. They came back from down 5-2 to being up 6-5 in the top of the 9th inning in game 4, going from 2.5% win probability to 86.4%. A Miguel Montero Grand Slam in the bottom of the 8th inning when the game was tied added 35.2% win probability. Aroldis Chapman got an 8 out save in Game 5 to keep the Cubs alive. And finally, Ben Zobrist's RBI Double in the 10th inning of Game 7 added 32.3% win probability and pushed the Cubs to complete the 3-1 World Series comeback against Cleveland.
+The Cubs also had their share of dramatic moments, from Javier Báez’s solo shot in the NLDS (+30.2%) to their Game 4 comeback against the Giants (+83.9%). Miguel Montero’s grand slam in the NLCS (+35.2%) and Aroldis Chapman’s eight-out save in Game 5 kept their run alive. Finally, Ben Zobrist’s go-ahead double (+32.3%) in Game 7 propelled them to a historic comeback over Cleveland.  
 
-When comparing the two teams, it is evident that both squads had their fair share of clutch moments—whether it was timely hitting, walk-offs, grand slams, or dominant pitching. The White Sox’s ability to capitalize on key at-bats, such as Joe Crede’s walk-off double and Geoff Blum’s game-changing home run in the World Series, parallels the Cubs' clutch performances like Zobrist's pivotal hit in Game 7. The Cubs’ ability to shift the momentum, particularly through their late-game rallies and clutch pitching, mirrors the White Sox's similar feats. With both teams exhibiting such resilience in the face of adversity, it becomes challenging to definitively say which team was more clutch. Ultimately, the postseason success of both teams seems to reflect equal levels of "clutchness," making the comparison even more intriguing.
+Both teams thrived under pressure, with clutch hits, dominant pitching, and momentum-shifting moments defining their championship runs. While comparing their "clutchness" is difficult, their legacies remain equally remarkable.
 
 ## Park Factors
 
@@ -100,11 +102,11 @@ Pythagorean record and run differential, however, need to be contextualized. We 
 
 ```{r tables1, echo=FALSE, warning=FALSE, message=FALSE}
 mlb_average_bat <- mlb_average_bat %>%
-  select(Year, R.G, PA, AB, R, H, X1B, X2B, X3B, HR, RBI, BB, SO, BA, OBP, SLG, OPS, TB, SH, SF, IBB, BIP, SB)
+  select(Year, PA, AB, H, X1B, X2B, X3B, HR, RBI, BB, SO, BA, OBP, SLG, OPS, TB, SH, SF, BIP, SB)
 kable(mlb_average_bat, caption = "Batting Statistics Comparison 2005 and 2016 MLB seasons") %>%
   kable_styling("striped", full_width = F)
 mlb_average_pitch <- mlb_average_pitch %>%
-  select(Year, R.G, ERA, CG, SHO, SV, H9, HR9, BB9, SO9, SO.W, BAbip, WHIP, BF, IBB)
+  select(Year, R.G, CG, SHO, R, ER, ERA, HR, IBB, SV, H9, HR9, BB9, SO9, SO.W, BAbip, WHIP, BF, BK, WP)
 kable(mlb_average_pitch, caption = "Pitching Statistics Comparison 2005 and 2016 MLB seasons") %>%
   kable_styling("striped", full_width = F)
 
@@ -133,7 +135,13 @@ These broader statistical trends provide critical context for comparing the two 
 
 ## Contextualizing the difference in numbers: T-Test for statistical significance
 
-A direct comparison between years can tell us one thing, but to really understand the difference between these two seasons, we must compare them to a larger sample size of MLB season averages. For that, we can use a t-test. 
+A direct comparison between years can tell us one thing, but to really understand the difference between these two seasons, we must compare them to a larger sample size of MLB season averages. For that, we can use a t-test. The t-test is just exploratory, and not adjusted for multiple comparisons.
+
+The t-test results provide a compelling analysis of the differences between the 2005 and 2016 MLB seasons relative to the broader 21st-century league averages. In 2005, the Chicago White Sox demonstrated a well-balanced approach, marked by strong pitching control and efficient contact hitting. Notable significant differences include a better WHIP (walks and hits per inning pitched) compared to the league average, highlighting the team’s pitching efficiency. Additionally, lower strikeouts per nine innings (SO9) and walks per nine innings (BB9) reflect a control-oriented pitching strategy. A notably lower batting average on balls in play (BAbip) suggests better fielding or pitching outcomes on balls in play, reinforcing a narrative of defensive dominance. The White Sox also showed higher overall offensive production, as seen in significant differences in OPS, hits, batting average (BA), and on-base percentage (OBP). However, metrics like ERA, runs batted in (RBI), and slugging percentage (SLG) were not significantly different, indicating that while the team excelled in getting runners on base, their power metrics aligned more closely with league averages. This season's success appears rooted in a traditional baseball strategy emphasizing contact hitting, pitching efficiency, and fielding.
+
+In contrast, the 2016 Chicago Cubs reflect the evolution of modern baseball, dominated by power pitching and the "Three True Outcomes" (strikeouts, walks, and home runs). The Cubs also achieved a significantly better WHIP than the league average, showcasing pitching efficiency. Higher SO9 demonstrates the team’s reliance on strikeouts as a primary tool for run prevention. While their HR9 (home runs allowed per nine innings) was marginally higher, this aligns with the broader mid-2010s trend toward a "boom or bust" approach in the sport. The Cubs saw significantly fewer balls in play (BIP), consistent with their emphasis on strikeouts and home runs. Offensively, higher walk rates and strikeouts suggest a patient hitting strategy characterized by longer plate appearances. However, metrics like BAbip, hits, BA, OPS, and SLG did not show significant differences from the league, indicating offensive production was closer to league norms than pitching performance.
+
+Comparing these two seasons highlights stark contrasts in style. The 2005 White Sox leaned heavily on traditional baseball dynamics, with defensive dominance reflected in lower BAbip and a reliance on balls in play. In contrast, the 2016 Cubs embodied the modern game’s trends, driven by power pitching and a strategy focused on strikeouts and walks. Both seasons reflect unique statistical narratives, with 2005 emphasizing balance and efficiency, while 2016 illustrates the growing dominance of power-focused strategies in the sport.
 
 ```{r tables2, echo=FALSE, warning=FALSE, message=FALSE}
 run_year_vs_year_t_test <- function(year_data, years_data, stats, year) {
@@ -176,20 +184,19 @@ league_bat_t_test_2005 <- run_year_vs_year_t_test(mlb_average_bat, data_1, categ
 
 # Combine the results for viewing
 league_totals_t_test_05 <- rbind(league_pitch_t_test_2005, league_bat_t_test_2005)
-print(league_totals_t_test_05)
+#print(league_totals_t_test_05)
+kable(league_totals_t_test_05, caption = "T-Test Results: 2005 vs 21st Century MLB Seasons")
+
 
 league_pitch_t_test_2016 <- run_year_vs_year_t_test(mlb_average_pitch, data, categories, "2016")
 league_bat_t_test_2016 <- run_year_vs_year_t_test(mlb_average_bat, data_1, categories_1, "2016")
 
 # Combine the results for viewing
 league_totals_t_test_16 <- rbind(league_pitch_t_test_2016, league_bat_t_test_2016)
-print(league_totals_t_test_16)
+#print(league_totals_t_test_16)
+kable(league_totals_t_test_16, caption = "T-Test Results: 2016 vs 21st Century MLB Seasons")
+
 ```
-The t-test results provide a compelling analysis of the differences between the 2005 and 2016 MLB seasons relative to the broader 21st-century league averages. In 2005, the Chicago White Sox demonstrated a well-balanced approach, marked by strong pitching control and efficient contact hitting. Notable significant differences include a better WHIP (walks and hits per inning pitched) compared to the league average, highlighting the team’s pitching efficiency. Additionally, lower strikeouts per nine innings (SO9) and walks per nine innings (BB9) reflect a control-oriented pitching strategy. A notably lower batting average on balls in play (BAbip) suggests better fielding or pitching outcomes on balls in play, reinforcing a narrative of defensive dominance. The White Sox also showed higher overall offensive production, as seen in significant differences in OPS, hits, batting average (BA), and on-base percentage (OBP). However, metrics like ERA, runs batted in (RBI), and slugging percentage (SLG) were not significantly different, indicating that while the team excelled in getting runners on base, their power metrics aligned more closely with league averages. This season's success appears rooted in a traditional baseball strategy emphasizing contact hitting, pitching efficiency, and fielding.
-
-In contrast, the 2016 Chicago Cubs reflect the evolution of modern baseball, dominated by power pitching and the "Three True Outcomes" (strikeouts, walks, and home runs). The Cubs also achieved a significantly better WHIP than the league average, showcasing pitching efficiency. Higher SO9 demonstrates the team’s reliance on strikeouts as a primary tool for run prevention. While their HR9 (home runs allowed per nine innings) was marginally higher, this aligns with the broader mid-2010s trend toward a "boom or bust" approach in the sport. The Cubs saw significantly fewer balls in play (BIP), consistent with their emphasis on strikeouts and home runs. Offensively, higher walk rates and strikeouts suggest a patient hitting strategy characterized by longer plate appearances. However, metrics like BAbip, hits, BA, OPS, and SLG did not show significant differences from the league, indicating offensive production was closer to league norms than pitching performance.
-
-Comparing these two seasons highlights stark contrasts in style. The 2005 White Sox leaned heavily on traditional baseball dynamics, with defensive dominance reflected in lower BAbip and a reliance on balls in play. In contrast, the 2016 Cubs embodied the modern game’s trends, driven by power pitching and a strategy focused on strikeouts and walks. Both seasons reflect unique statistical narratives, with 2005 emphasizing balance and efficiency, while 2016 illustrates the growing dominance of power-focused strategies in the sport.
 
 ## Traditional Team Totals
 
@@ -203,7 +210,7 @@ team_bat <- team_bat %>%
 kable(team_bat, caption = "Comparison of Batting Statistics for 2005 White Sox and 2016 Cubs") %>%
   kable_styling()
 team_pitch <- team_pitch %>%
-  select(Tm, 'RA/G', 'W-L%', ERA, CG, tSho, SV, IP, H9, HR, BB9, SO9, LOB, WHIP, FIP, 'ERA+', BF, WP, HBP, R, ER)
+  select(Tm, 'RA/G', 'W-L%', ERA, CG, tSho, SV, IP, H9, HR, BB9, SO9, LOB, WHIP, FIP, 'ERA+', BF, WP, R, ER)
 kable(team_pitch, caption = "Comparison of Pitching Statistics for 2005 White Sox and 2016 Cubs") %>%
   kable_styling()
 ```
@@ -217,7 +224,13 @@ The comparison underscores how these two championship-winning teams adapted thei
 
 ## Contextualization: 2016 and 2005 Peer Comparison
 
-As with the previous example of comparing the 2005 and 2016 yearly averages to other yearly averages, we need to compare the 2016 Cubs to other 2016 teams and the 2005 White Sox to other 2005 teams. 
+As with the previous example of comparing the 2005 and 2016 yearly averages to other yearly averages, we need to compare the 2016 Cubs to other 2016 teams and the 2005 White Sox to other 2005 teams. Again, we use a t-test. Again, the t-test is just exploratory, and not adjusted for multiple comparisons.
+
+The 2005 Chicago White Sox and the 2016 Chicago Cubs excelled in their respective eras but displayed strengths shaped by different strategic emphases and league contexts. The White Sox’s pitching was a cornerstone of their success, as their ERA (3.61) was significantly better than the league average (4.28), supported by superior WHIP and H/9 metrics. Their ability to limit baserunners and hits was critical, even though their strikeout rate (SO9) was not significantly above league norms, reflecting a reliance on pitch-to-contact strategies rather than overpowering hitters. Conversely, the 2016 Cubs dominated nearly all pitching categories, including ERA, WHIP, H/9, and FIP, with standout statistical significance. They also excelled in strikeouts, highlighting a modern trend toward emphasizing swing-and-miss pitching. 
+
+Offensively, the 2005 White Sox relied on a traditional power-speed combination, excelling in home runs and stolen bases but struggling in plate discipline metrics like OBP. Their offense was efficient rather than explosive, complementing their pitching strengths. Meanwhile, the 2016 Cubs thrived in metrics emblematic of the sabermetric revolution, including OBP, SLG, and OPS. Their offensive approach, which valued walks and extra-base hits, reflected the growing importance of plate discipline in modern baseball. While their stolen base numbers were below league averages, this was consistent with a reduced emphasis on base-stealing in favor of power and efficiency. 
+
+These statistical profiles highlight not only the unique strengths of each team but also the evolution of baseball strategies over time. The 2005 White Sox embodied a balance of strong pitching and traditional offensive metrics, thriving in an era that prioritized efficiency. In contrast, the 2016 Cubs leveraged sabermetrics and modern trends, excelling in power and plate discipline to achieve success. Both teams’ significant deviations from league norms in key categories underscore their ability to capitalize on their strengths and dominate in their respective eras.
 
 ```{r ttests, echo=FALSE, warning=FALSE, message=FALSE}
 
@@ -249,8 +262,8 @@ run_team_vs_league_t_test <- function(team_data, league_data, stats, team) {
   return(do.call(rbind, results))
 }
 
-batting_stats <- c("BA", "OBP", "SLG", "OPS", "OPS+", "H", "HR", "R", "RBI", "SB")  # Replace with actual column names in teams_bat data
-pitching_stats <- c("ERA", "ERA+", "ER", "WHIP", "FIP", "SO9", "H9", "HR9", "BB9")  # Replace with actual column names in teams_pitch data
+batting_stats <- c("BA", "OBP", "SLG", "OPS", "OPS+", "H", "HR", "R", "RBI", "SB")  
+pitching_stats <- c("ERA", "ERA+", "ER", "WHIP", "FIP", "SO9", "H9", "HR9", "BB9") 
 
 # Run the test for each team
 team_test_results_2005_pitch <- run_team_vs_league_t_test(team_pitch, teams_pitch_2005, pitching_stats, "2005 Chicago White Sox")
@@ -359,9 +372,11 @@ bullpen_pitchers <- pitching_summary %>% filter(IP <= 100)
 
 # Create summary tables for batters by team
 white_sox_batters <- batting_summary %>% filter(Team == "Sox 2005") %>%
-  select(name, PA, efWAR, ebWAR, fWAR, bWAR)
+   rename(position = Pos) %>%  # Rename "Pos" to "position"
+  select(name, position, PA, efWAR, ebWAR, fWAR, bWAR)
 cubs_batters <- batting_summary %>% filter(Team == "Cubs 2016") %>%
-  select(name, PA, efWAR, ebWAR, fWAR, bWAR)
+   rename(position = Pos) %>%  # Rename "Pos" to "position"
+  select(name, position, PA, efWAR, ebWAR, fWAR, bWAR)
 
 # Display the tables
 kable(white_sox_batters, caption = "Total efWAR, ebWAR, fWAR, and bWAR for White Sox 2005 Batters") %>%
@@ -369,11 +384,14 @@ kable(white_sox_batters, caption = "Total efWAR, ebWAR, fWAR, and bWAR for White
 kable(cubs_batters, caption = "Total efWAR, ebWAR, fWAR, and bWAR for Cubs 2016 Batters") %>%
   kable_styling()
 
+
 # Separate starting pitchers by team
 white_sox_starting <- starting_pitchers %>% filter(Team == "Sox 2005") %>%
-  select(name, IP, efWAR, ebWAR, fWAR, bWAR)
+   rename(position = Pos) %>%  # Rename "Pos" to "position"
+  select(name, position, IP, efWAR, ebWAR, fWAR, bWAR)
 cubs_starting <- starting_pitchers %>% filter(Team == "Cubs 2016") %>%
-  select(name, IP, efWAR, ebWAR, fWAR, bWAR)
+   rename(position = Pos) %>%  # Rename "Pos" to "position"
+  select(name, position, IP, efWAR, ebWAR, fWAR, bWAR)
 
 # Display the tables
 kable(white_sox_starting, caption = "Total efWAR, ebWAR, fWAR, and bWAR for White Sox 2005 Starting Pitchers") %>%
@@ -383,9 +401,13 @@ kable(cubs_starting, caption = "Total efWAR, ebWAR, fWAR, and bWAR for Cubs 2016
 
 # Separate bullpen pitchers by team
 white_sox_bullpen <- bullpen_pitchers %>% filter(Team == "Sox 2005") %>%
-  select(name, IP, efWAR, ebWAR, fWAR, bWAR)
+     rename(position = Pos) %>%  # Rename "Pos" to "position"
+  mutate(position = replace_na(position, "RP")) %>%  # Replace NA with "RP"
+  select(name, position, IP, efWAR, ebWAR, fWAR, bWAR)
 cubs_bullpen <- bullpen_pitchers %>% filter(Team == "Cubs 2016") %>%
-  select(name, IP, efWAR, ebWAR, fWAR, bWAR)
+     rename(position = Pos) %>%  # Rename "Pos" to "position"
+  mutate(position = replace_na(position, "RP")) %>%  # Replace NA with "RP"
+  select(name, position, IP, efWAR, ebWAR, fWAR, bWAR)
 
 # Display the tables
 kable(white_sox_bullpen, caption = "Total efWAR, ebWAR, fWAR, and bWAR for White Sox 2005 Bullpen Pitchers") %>%
@@ -399,17 +421,11 @@ There is not a universal formula for WAR, so two main ones are used; bWAR, from 
 
 According to [Darin W. White](https://www.samford.edu/sports-analytics/fans/2023/Sabermetrics-101-Understanding-the-Calculation-of-WAR), there are a few key differences between fWAR and bWAR. Both assign a total of 1000 WAR to all players, but fWAR allocates 570 to position players, while bWAR allocates 590 to position players, meaning Fangraphs favors pitching by 2%. 
 
-The other main difference White points out is in the calculation from each statistical database. 
+The other main difference White points out is in the calculation from each statistical database. Both factor in batting, running, fielding, pitching, and adjustment for averages, but they differ in how they calculate player fielding, as Fangraphs uses Ultimate Zone Rating, and Baseball Reference uses Defensive Runs Saved. Frangraphs' version takes into account 3 years' worth of data, but Baseball Reference takes into account only 1 year worth of data, making it more susceptible to noise, especially with young players. 
 
-fWAR = (Batting runs + Base Running runs + Fielding runs + Positional Adjustment + League Adjustment + Replacement Runs) / (Runs per win)
+Jon Lester (2016 Cubs) had an fWAR of 4.0 but a higher bWAR of 5.3 due to Baseball-Reference's inclusion of runs allowed and adjustment for team defense, which benefited from a historically strong Cubs defense. When adjusted for era, his efWAR might highlight his performance relative to the league's higher scoring environment in 2016, while ebWAR would similarly account for his contribution to the team’s run prevention within the same context. 
 
-bWAR = (Batting Runs + Base Running runs +/- Runs from GIDP + Fielding Runs + Positional Adjustment Runs + Replacement Level Runs) / (Runs per win)
-
-The two statistics differ in how they calculate player fielding, as Fangraphs uses Ultimate Zone Rating, and Baseball Reference uses Defensive Runs Saved. Frangraphs' version takes into account 3 years' worth of data, but Baseball Reference takes into account only 1 year worth of data, making it more susceptible to noise, especially with young players. 
-
-For example, Jon Lester (2016 Cubs) had an fWAR of 4.0 but a higher bWAR of 5.3 due to Baseball-Reference's inclusion of runs allowed and adjustment for team defense, which benefited from a historically strong Cubs defense. When adjusted for era, his efWAR might highlight his performance relative to the league's higher scoring environment in 2016, while ebWAR would similarly account for his contribution to the team’s run prevention within the same context. 
-
-In contrast, Mark Buehrle (2005 White Sox) saw a lower fWAR of 3.6 compared to his bWAR of 4.9, as his success relied heavily on inducing weak contact and his defense converting plays behind him. This discrepancy illustrates how bWAR credits him for team-influenced outcomes. Adjusting to era, ebWAR would acknowledge the White Sox’s more balanced scoring environment in 2005, while efWAR would downplay his reliance on defensive outcomes.
+Mark Buehrle (2005 White Sox) saw a lower fWAR of 3.6 compared to his bWAR of 4.9, as his success relied heavily on inducing weak contact and his defense converting plays behind him. This discrepancy illustrates how bWAR credits him for team-influenced outcomes. Adjusting to era, ebWAR would acknowledge the White Sox’s more balanced scoring environment in 2005, while efWAR would downplay his reliance on defensive outcomes.
 
 For position players, these differences are less pronounced but still important. Anthony Rizzo (2016 Cubs) earned an fWAR of 5.2 compared to a bWAR of 5.7, reflecting small variances in how offensive contributions and positional adjustments are weighted. Paul Konerko (2005 White Sox) exhibited a similar trend, with his fWAR slightly below his bWAR, highlighting his reliance on traditional offensive metrics like RBIs that bWAR values more than fWAR.
 
@@ -425,16 +441,16 @@ We can also plot WAR values of players to see which team has higher WAR players,
 
 ### Batter Comparison
 
-```{r charts, echo=FALSE, message=FALSE, warning=FALSE}
+```{r charts, echo=FALSE, message=FALSE, warning=FALSE, fig.align="center"}
 batting_summary$logo <- ifelse(batting_summary$Team == "Sox 2005",
 "ChicagoWhiteSoxLogo.png",
 "ChicagoCubslogo.png")
 
 # Plot 1: ebWAR vs efWAR
 ggplot(batting_summary, aes(x = ebWAR, y = efWAR, image = logo, label = name, size = PA)) +
-  geom_image(size = 0.1) +  # Adjust logo size
+  geom_image(size = 0.155) +  # Adjust logo size
   geom_text_repel(vjust = -0.5, show.legend = FALSE) +
-  labs(title = "ebWAR vs efWAR: 2005 White Sox vs. 2016 Cubs - Batters",
+  labs(title = "efWAR vs ebWAR: 2005 White Sox vs. 2016 Cubs - Batters",
        x = "ebWAR", y = "efWAR") +
   theme_minimal() +
   scale_x_continuous(breaks = seq(floor(min(batting_summary$ebWAR, na.rm = TRUE)), ceiling(max(batting_summary$ebWAR, na.rm = TRUE)), by = 1)) +
@@ -445,12 +461,12 @@ ggplot(batting_summary, aes(x = ebWAR, y = efWAR, image = logo, label = name, si
         panel.grid.minor = element_line(color = "grey70"))
 
 ```
-```{r chartss, echo = FALSE, warning=FALSE, message=FALSE}
+```{r chartss, echo = FALSE, warning=FALSE, message=FALSE, fig.align="center"}
 # Plot 2: bWAR vs fWAR
 ggplot(batting_summary, aes(x = bWAR, y = fWAR, image = logo, label = name, size = PA)) +
-  geom_image(size = 0.1) +
+  geom_image(size = 0.15) +
   geom_text_repel(vjust = -0.5, show.legend = FALSE) +
-  labs(title = "bWAR vs fWAR: 2005 White Sox vs. 2016 Cubs - Batters",
+  labs(title = "fWAR vs bWAR: 2005 White Sox vs. 2016 Cubs - Batters",
        x = "bWAR", y = "fWAR") +
   theme_minimal() +
   scale_x_continuous(breaks = seq(floor(min(batting_summary$bWAR, na.rm = TRUE)), ceiling(max(batting_summary$bWAR, na.rm = TRUE)), by = 1)) +
@@ -461,13 +477,13 @@ ggplot(batting_summary, aes(x = bWAR, y = fWAR, image = logo, label = name, size
         panel.grid.minor = element_line(color = "grey70"))
 
 ```
-```{r chartsss, echo = FALSE, warning=FALSE, message=FALSE}
+```{r chartsss, echo = FALSE, warning=FALSE, message=FALSE, fig.align="center"}
 
 # Plot 3: bWAR vs ebWAR
 ggplot(batting_summary, aes(x = bWAR, y = ebWAR, image = logo, label = name, size = PA)) +
-  geom_image(size = 0.1) +
+  geom_image(size = 0.15) +
   geom_text_repel(vjust = -0.5, show.legend = FALSE) +
-  labs(title = "bWAR vs ebWAR: 2005 White Sox vs. 2016 Cubs - Batters",
+  labs(title = "ebWAR vs bbWAR: 2005 White Sox vs. 2016 Cubs - Batters",
        x = "bWAR", y = "ebWAR") +
   theme_minimal() +
   scale_x_continuous(breaks = seq(floor(min(batting_summary$bWAR, na.rm = TRUE)), ceiling(max(batting_summary$bWAR, na.rm = TRUE)), by = 1)) +
@@ -478,13 +494,13 @@ ggplot(batting_summary, aes(x = bWAR, y = ebWAR, image = logo, label = name, siz
         panel.grid.minor = element_line(color = "grey70"))
 
 ```
-```{r chartssss, echo = FALSE, warning=FALSE, message=FALSE}
+```{r chartssss, echo = FALSE, warning=FALSE, message=FALSE, fig.align="center"}
 
 # Plot 4: fWAR vs efWAR
 ggplot(batting_summary, aes(x = fWAR, y = efWAR, image = logo, label = name, size = PA)) +
-  geom_image(size = 0.1) +
+  geom_image(size = 0.15) +
   geom_text_repel(vjust = -0.5, show.legend = FALSE) +
-  labs(title = "fWAR vs efWAR: 2005 White Sox vs. 2016 Cubs - Batters",
+  labs(title = "efWAR vs fWAR: 2005 White Sox vs. 2016 Cubs - Batters",
        x = "fWAR", y = "efWAR") +
   theme_minimal() +
   scale_x_continuous(breaks = seq(floor(min(batting_summary$fWAR, na.rm = TRUE)), ceiling(max(batting_summary$fWAR, na.rm = TRUE)), by = 1)) +
@@ -507,7 +523,7 @@ The era-adjusted metrics, efWAR and ebWAR, highlight these trends even more star
 ## Starting Pitcher Comparison
 
 
-```{r charts2, echo=FALSE, warning=FALSE, message=FALSE}
+```{r charts2, echo=FALSE, warning=FALSE, message=FALSE, fig.align="center"}
 # Add team logos to the dataset
 starting_pitchers$logo <- ifelse(starting_pitchers$Team == "Sox 2005",
 "ChicagoWhiteSoxLogo.png",
@@ -515,9 +531,9 @@ starting_pitchers$logo <- ifelse(starting_pitchers$Team == "Sox 2005",
 
 # Plot 1: ebWAR vs efWAR
 ggplot(starting_pitchers, aes(x = ebWAR, y = efWAR, image = logo, label = name, size = IP)) +
-  geom_image(size = 0.1) +  # Adjust logo size
+  geom_image(size = 0.15) +  # Adjust logo size
   geom_text_repel(vjust = -0.5, show.legend = FALSE) +
-  labs(title = "ebWAR vs efWAR: 2005 White Sox vs. 2016 Cubs - Starting Pitchers",
+  labs(title = "efWAR vs ebWAR: 2005 White Sox vs. 2016 Cubs - Starting Pitchers",
        x = "ebWAR", y = "efWAR") +
   theme_minimal() +
   scale_x_continuous(breaks = seq(floor(min(starting_pitchers$ebWAR, na.rm = TRUE)), ceiling(max(starting_pitchers$ebWAR, na.rm = TRUE)), by = 1)) +
@@ -529,14 +545,13 @@ ggplot(starting_pitchers, aes(x = ebWAR, y = efWAR, image = logo, label = name, 
 
 ```
 
-```{r charts2s, echo=FALSE, warning=FALSE, message=FALSE}
-
+```{r charts2s, echo=FALSE, warning=FALSE, message=FALSE, fig.align="center"}
 
 # Plot 2: bWAR vs fWAR
 ggplot(starting_pitchers, aes(x = bWAR, y = fWAR, image = logo, label = name, size = IP)) +
-  geom_image(size = 0.1) +
+  geom_image(size = 0.15) +
   geom_text_repel(vjust = -0.5, show.legend = FALSE) +
-  labs(title = "bWAR vs fWAR: 2005 White Sox vs. 2016 Cubs - Starting Pitchers",
+  labs(title = "fWAR vs bWAR: 2005 White Sox vs. 2016 Cubs - Starting Pitchers",
        x = "bWAR", y = "fWAR") +
   theme_minimal() +
   scale_x_continuous(breaks = seq(floor(min(starting_pitchers$bWAR, na.rm = TRUE)), ceiling(max(starting_pitchers$bWAR, na.rm = TRUE)), by = 1)) +
@@ -547,13 +562,13 @@ ggplot(starting_pitchers, aes(x = bWAR, y = fWAR, image = logo, label = name, si
         panel.grid.minor = element_line(color = "grey70"))
 ```
 
-```{r charts2ss, echo=FALSE, warning=FALSE, message=FALSE}
+```{r charts2ss, echo=FALSE, warning=FALSE, message=FALSE, fig.align="center"}
 
 # Plot 3: bWAR vs ebWAR
 ggplot(starting_pitchers, aes(x = bWAR, y = ebWAR, image = logo, label = name, size = IP)) +
-  geom_image(size = 0.1) +
+  geom_image(size = 0.15) +
   geom_text_repel(vjust = -0.5, show.legend = FALSE) +
-  labs(title = "bWAR vs ebWAR: 2005 White Sox vs. 2016 Cubs - Starting Pitchers",
+  labs(title = "ebWAR vs bWAR: 2005 White Sox vs. 2016 Cubs - Starting Pitchers",
        x = "bWAR", y = "ebWAR") +
   theme_minimal() +
   scale_x_continuous(breaks = seq(floor(min(starting_pitchers$bWAR, na.rm = TRUE)), ceiling(max(starting_pitchers$bWAR, na.rm = TRUE)), by = 1)) +
@@ -564,13 +579,13 @@ ggplot(starting_pitchers, aes(x = bWAR, y = ebWAR, image = logo, label = name, s
         panel.grid.minor = element_line(color = "grey70"))
 ```
 
-```{r charts2ssss, echo=FALSE, warning=FALSE, message=FALSE}
+```{r charts2ssss, echo=FALSE, warning=FALSE, message=FALSE, fig.align="center"}
 
 # Plot 4: fWAR vs efWAR
 ggplot(starting_pitchers, aes(x = fWAR, y = efWAR, image = logo, label = name, size = IP)) +
-  geom_image(size = 0.1) +
+  geom_image(size = 0.15) +
   geom_text_repel(vjust = -0.5, show.legend = FALSE) +
-  labs(title = "fWAR vs efWAR: 2005 White Sox vs. 2016 Cubs - Starting Pitchers",
+  labs(title = "efWAR vs fWAR: 2005 White Sox vs. 2016 Cubs - Starting Pitchers",
        x = "fWAR", y = "efWAR") +
   theme_minimal() +
   scale_x_continuous(breaks = seq(floor(min(starting_pitchers$fWAR, na.rm = TRUE)), ceiling(max(starting_pitchers$fWAR, na.rm = TRUE)), by = 1)) +
@@ -594,7 +609,7 @@ These trends in WAR values and era-adjusted metrics show how the Cubs relied on 
 
 We can also do the same for bullpen pitchers.
 
-```{r chartsssssss, echo=FALSE, warning=FALSE, message=FALSE}
+```{r chartsssssss, echo=FALSE, warning=FALSE, message=FALSE, fig.align="center"}
 # Add team logos to the dataset
 bullpen_pitchers$logo <- ifelse(bullpen_pitchers$Team == "Sox 2005",
 "ChicagoWhiteSoxLogo.png",
@@ -602,9 +617,9 @@ bullpen_pitchers$logo <- ifelse(bullpen_pitchers$Team == "Sox 2005",
 
 # Plot 1: ebWAR vs efWAR
 ggplot(bullpen_pitchers, aes(x = ebWAR, y = efWAR, image = logo, label = name, size = IP)) +
-  geom_image(size = 0.1) +  # Adjust logo size
+  geom_image(size = 0.15) +  # Adjust logo size
   geom_text_repel(vjust = -0.5, show.legend = FALSE) +
-  labs(title = "ebWAR vs efWAR: 2005 White Sox vs. 2016 Cubs - Bullpen Pitchers",
+  labs(title = "efWAR vs ebWAR: 2005 White Sox vs. 2016 Cubs - Bullpen Pitchers",
        x = "ebWAR", y = "efWAR") +
   theme_minimal() +
   scale_x_continuous(breaks = seq(floor(min(bullpen_pitchers$ebWAR, na.rm = TRUE)), ceiling(max(bullpen_pitchers$ebWAR, na.rm = TRUE)), by = 1)) +
@@ -615,13 +630,13 @@ ggplot(bullpen_pitchers, aes(x = ebWAR, y = efWAR, image = logo, label = name, s
         panel.grid.minor = element_line(color = "grey70"))
 
 ```
-```{r chartsssssss3, echo=FALSE, warning=FALSE, message=FALSE}
+```{r chartsssssss3, echo=FALSE, warning=FALSE, message=FALSE, fig.align="center"}
 
 # Plot 2: bWAR vs fWAR
 ggplot(bullpen_pitchers, aes(x = bWAR, y = fWAR, image = logo, label = name, size = IP)) +
-  geom_image(size = 0.1) +
+  geom_image(size = 0.15) +
   geom_text_repel(vjust = -0.5, show.legend = FALSE) +
-  labs(title = "bWAR vs fWAR: 2005 White Sox vs. 2016 Cubs - Bullpen Pitchers",
+  labs(title = "fWAR vs bWAR: 2005 White Sox vs. 2016 Cubs - Bullpen Pitchers",
        x = "bWAR", y = "fWAR") +
   theme_minimal() +
   scale_x_continuous(breaks = seq(floor(min(bullpen_pitchers$bWAR, na.rm = TRUE)), ceiling(max(bullpen_pitchers$bWAR, na.rm = TRUE)), by = 1)) +
@@ -632,14 +647,14 @@ ggplot(bullpen_pitchers, aes(x = bWAR, y = fWAR, image = logo, label = name, siz
         panel.grid.minor = element_line(color = "grey70"))
 ```
 
-```{r chartsssssss33, echo=FALSE, warning=FALSE, message=FALSE}
+```{r chartsssssss33, echo=FALSE, warning=FALSE, message=FALSE, fig.align="center"}
 
 
 # Plot 3: bWAR vs ebWAR
 ggplot(bullpen_pitchers, aes(x = bWAR, y = ebWAR, image = logo, label = name, size = IP)) +
-  geom_image(size = 0.1) +
+  geom_image(size = 0.15) +
   geom_text_repel(vjust = -0.5, show.legend = FALSE) +
-  labs(title = "bWAR vs ebWAR: 2005 White Sox vs. 2016 Cubs - Bullpen Pitchers",
+  labs(title = "ebWAR vs bWAR: 2005 White Sox vs. 2016 Cubs - Bullpen Pitchers",
        x = "bWAR", y = "ebWAR") +
   theme_minimal() +
   scale_x_continuous(breaks = seq(floor(min(bullpen_pitchers$bWAR, na.rm = TRUE)), ceiling(max(bullpen_pitchers$bWAR, na.rm = TRUE)), by = 1)) +
@@ -651,13 +666,13 @@ ggplot(bullpen_pitchers, aes(x = bWAR, y = ebWAR, image = logo, label = name, si
 
 ```
 
-```{r chartsssssss333, echo=FALSE, warning=FALSE, message=FALSE}
+```{r chartsssssss333, echo=FALSE, warning=FALSE, message=FALSE, fig.align="center"}
 
 # Plot 4: fWAR vs efWAR
 ggplot(bullpen_pitchers, aes(x = fWAR, y = efWAR, image = logo, label = name, size = IP)) +
-  geom_image(size = 0.1) +
+  geom_image(size = 0.15) +
   geom_text_repel(vjust = -0.5, show.legend = FALSE) +
-  labs(title = "fWAR vs efWAR: 2005 White Sox vs. 2016 Cubs - Bullpen Pitchers",
+  labs(title = "efWAR vs fWAR: 2005 White Sox vs. 2016 Cubs - Bullpen Pitchers",
        x = "fWAR", y = "efWAR") +
   theme_minimal() +
   scale_x_continuous(breaks = seq(floor(min(bullpen_pitchers$fWAR, na.rm = TRUE)), ceiling(max(bullpen_pitchers$fWAR, na.rm = TRUE)), by = 1)) +
@@ -667,8 +682,6 @@ ggplot(bullpen_pitchers, aes(x = fWAR, y = efWAR, image = logo, label = name, si
   theme(panel.grid.major = element_line(color = "grey50"),
         panel.grid.minor = element_line(color = "grey70"))
 ```
-
-
 
 The Cubs went through a ton of pitchers in search for a consistent bullpen in 2016, including deadline day deals for Mike Montgomery (who got the final out in the World Series) and Aroldis Chapman (who was one of the best closers in baseball). Chapman was the best reliever among both teams, followed by three White Sox pitchers in Neal Cotts, Cliff Politte, and Dustin Hermanson, then two more Cubs in Mike Mntgomery and Pedro Strop. Neither bullpen was elite, but both ended up being solid, and good enough to get the job done considering how good the starting pitching, batting, baserunning, and fielding was.
 
@@ -684,17 +697,21 @@ As for clutch performance, the White Sox demonstrated a reputation for stepping 
 
 On offense, the Cubs were significantly more potent, as shown by the WAR contributions of Kris Bryant, Anthony Rizzo, and Dexter Fowler. Bryant’s 7.9 fWAR and Rizzo’s 5.8 fWAR in 2016 vastly outshine the White Sox’s top hitters like Paul Konerko and Jermaine Dye, whose WAR contributions, while strong, do not compare to the Cubs’ offensive firepower. This disparity is underscored by the Cubs' era-adjusted WAR metrics, where their efWAR and ebWAR are substantially higher, showing that their offensive and defensive contributions in the higher-scoring 2016 environment were more efficient than the White Sox’s production in the lower-scoring 2005 environment. The Cubs also had an exceptional ability to get on base, as evidenced by their .343 OBP, which ranked in the top half of MLB teams, compared to the White Sox's .323 OBP. While the White Sox offense, fueled by timely hitting, could be dangerous, it lacked the same overall balance and depth seen in the Cubs' lineup, giving the Cubs a clear edge in terms of sustained offensive production. 
 
-Thus, while the White Sox possess strengths in pitching depth, bullpen dominance, and clutch moments, the Cubs’ combination of elite starting pitching, offensive firepower, and defensive prowess provides a significant edge. The Cubs’ superior era-adjusted WAR values further highlight their efficiency in the 2016 season, and they would likely outperform the White Sox in a series, despite the White Sox's strong postseason pedigree. **In a 7-game series, I predict that the Cubs would likely emerge victorious with a 4-2 win**, although the White Sox’s depth, timely hitting, and bullpen would make the series highly competitive. Ultimately, while both teams share a legacy of clutch performances, the Cubs’ higher overall WAR, especially in the context of era-adjusted statistics, would be the determining factor in their triumph.
+Thus, while the White Sox possess strengths in pitching depth, bullpen dominance, and clutch moments, the Cubs’ combination of elite starting pitching, offensive firepower, and defensive prowess provides a significant edge. The Cubs’ superior era-adjusted WAR values further highlight their efficiency in the 2016 season, and they would likely outperform the White Sox in a series, despite the White Sox's strong postseason pedigree. **In a 7-game series, I predict that the Cubs would likely emerge victorious with a 4-2 win**, although the White Sox’s depth, timely hitting, and bullpen would make the series highly competitive. Ultimately, while both teams share a legacy of clutch performances, the Cubs’ higher overall WAR, especially in the context of era-adjusted statistics, would be the determining factor in their triumph. This projection is mostly based on the statistics we have covered in this article, but in the future, we could create a simulation with the era adjusted statistics to run this matchup in a 7 game series 10,000 times, and really see the most likely outcome, instead of only using human prediction.
 
 
-## References 
+### References 
+
 Sabermetrics 101: Understanding the Calculation of WAR, Darin W. White, PhD, Samford University, https://www.samford.edu/sports-analytics/fans/2023/Sabermetrics-101-Understanding-the-Calculation-of-WAR
 
 The Full House Model for cross-era comparisons of baseball players (results and fun digressions version 2.0)
-Daniel J. Eck and Shen Yan and Adrian Burgos Jr. and Christopher Kinson, https://htmlpreview.github.io/?https://github.com/ecklab/era-adjustment-app-supplement/blob/main/writeups/era_adjusted_V2_I.html
+
+Daniel J. Eck and Shen Yan and Adrian Burgos Jr. and Christopher Kinson https://htmlpreview.github.io/?https://github.com/ecklab/era-adjustment-app-supplement/blob/main/writeups/era_adjusted_V2_I.html
 
 Baseball Reference 2005 White Sox 2016 Cubs
 
 Fangraphs Win Probability Game Graphs
 
-Thank you to Professor Daniel J. Eck, Professor David Dalpiaz, the University of Illinois, and the Chicago Cubs for allowing me to write this piece
+### Acknowledgements
+
+Thank you to Professor Daniel J. Eck, the University of Illinois, URES, and the entire Eck MLB Era-adjustment lab for allowing me to write this piece.
